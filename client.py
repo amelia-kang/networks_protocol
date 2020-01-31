@@ -118,6 +118,7 @@ if __name__ == "__main__":
             elif request_code == 'DISCONNECT':
                 if is_connected == False:
                     print('Client has not opened a connection or connection already closed.')
+                    continue
                 else:
                     client, is_connected = disconnect(client, request, request_code, is_connected)
                 break
