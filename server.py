@@ -1,7 +1,7 @@
-# Import socket module
 from socket import socket, AF_INET, SOCK_STREAM
+from threading import Thread, active_count
 import sys  # In order to terminate the program
-# from threading 
+from time import sleep
 
 DEFAULT_PIN_STATUS = False
 GET_REQ_PARAMS = ['COLOR','CONTAINS','REFERSTO']
@@ -28,7 +28,7 @@ def socket_service(connection_socket):
         elif request_code == 'CLEAR':
             init_len = len(notes)
             notes = list(filter(lambda n: n['is_pinned']==True, notes))
-            response = "{} notes without pins removed".format(init_len-len(notes))
+            response = "{} unpinned note(s) without removed".format(init_len-len(notes))
 
         elif request_code in ('PIN','UNPIN'):
             pin_count = 0
@@ -143,11 +143,8 @@ def socket_service(connection_socket):
                 else:
                     for n in filtered_notes:
                         response += '{},{} {}\n'.format(n['x'], n['y'], n['message'])
-                print(response)
-
-
-
-                        
+                print('response:',response)
+      
         connection_socket.send(response.encode())
 
 
@@ -169,21 +166,25 @@ if __name__ == "__main__":
         # Create a TCP server socket
         server_socket = socket(AF_INET, SOCK_STREAM)
         server_socket.bind(("", server_port))
-        server_socket.listen(1)
+        thread_limit = 5
+        server_socket.listen(thread_limit)
         print('Server is ready')
 
         # Server should be up and running and listening to the incoming connections
         while True:
+            print('Current active threads count:', active_count())
+            while active_count() == thread_limit:
+                print('{} alive, waiting for any to finish to continue opening a new connection...')
+                sleep(3)
+                continue
             # (Wait to) Set up a new connection from the client
             connection_socket, addr = server_socket.accept()
             print(connection_socket)
             print(addr)
-
-            socket_service(connection_socket)
-            print('one connection ended')
+            connection_thread = Thread(target=socket_service, args=(connection_socket,))
+            connection_thread.start()
+            # print('one connection ended')
             
-
-        
     except Exception as e:
         print(e)
     finally:

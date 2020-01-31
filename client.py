@@ -116,7 +116,7 @@ while True:
             print('Request {} sent to server, waiting for response...'.format(request))
             # Collect server response
             response = client.recv(1024)
-            print('Server response:\n', response.decode())
+            print('Server response:\n{}'.format(response.decode()))
 
     except Exception as e:
         print(e)
