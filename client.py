@@ -2,9 +2,6 @@ import tkinter as tk
 from socket import socket, AF_INET, SOCK_STREAM
 import sys
 
-AVAIL_REQS = ['CONNECT', 'DISCONNECT', 'POST', 'GET', 'PIN', 'UNPIN', 'CLEAR']
-print('Available commands:', AVAIL_REQS)
-
 def connect(client, request, request_code, is_connected):
     try:
         if len(request) == 1:
@@ -88,57 +85,62 @@ def pin_unpin(request, request_code, request_raw):
     return request
 
 
-# Define TCP socket
-client = socket(AF_INET, SOCK_STREAM)
-is_connected = False
+if __name__ == "__main__":
 
-while True:
-    # Get capitalized user input
-    request_raw = input('Input a request: ').strip()
-    request = request_raw.split()
-    request_code = request[0].upper()
-    if request_code not in AVAIL_REQS:
-        print('Given request is not valid. Please check valid options and retry.')
-        continue
-    try:
-        if request_code == 'CONNECT':
-            if is_connected == True:
-                print('Client already connected to a server {}'.format)
-                continue
-            client, is_connected, request = connect(client, request, request_code, is_connected)
+    AVAIL_REQS = ['CONNECT', 'DISCONNECT', 'POST', 'GET', 'PIN', 'UNPIN', 'CLEAR']
+    print('Available commands:', AVAIL_REQS)
+    
+    # Define TCP socket
+    client = socket(AF_INET, SOCK_STREAM)
+    is_connected = False
 
-        elif request_code == 'DISCONNECT':
-            if is_connected == False:
-                print('Client has not opened a connection or connection already closed.')
+    while True:
+        # Get capitalized user input
+        request_raw = input('Input a request: ').strip()
+        request = request_raw.split()
+        request_code = request[0].upper()
+        if request_code not in AVAIL_REQS:
+            print('Given request is not valid. Please check valid options and retry.')
+            continue
+        try:
+            if request_code == 'CONNECT':
+                if is_connected == True:
+                    print('Client already connected to a server {}'.format)
+                    continue
+                client, is_connected, request = connect(client, request, request_code, is_connected)
+
+            elif request_code == 'DISCONNECT':
+                if is_connected == False:
+                    print('Client has not opened a connection or connection already closed.')
+                else:
+                    client, is_connected = disconnect(client, request, request_code, is_connected)
+                break
             else:
-                client, is_connected = disconnect(client, request, request_code, is_connected)
-            break
-        else:
-            if is_connected == False:
-                print('No open connection established. Please CONNECT to server first.')
-                continue
-            if request_code == 'POST':
-                request = post(request, request_code)
-                if request == None:
-                    continue  
-            elif request_code == 'GET':
-                request = get(request, request_code, request_raw)
-                if not request:
+                if is_connected == False:
+                    print('No open connection established. Please CONNECT to server first.')
                     continue
-            elif request_code == 'PIN' or request_code=='UNPIN':
-                request = pin_unpin(request, request_code, request_raw)
-                if not request:
-                    continue
-            elif request_code == 'CLEAR':
-                request = request_code
+                if request_code == 'POST':
+                    request = post(request, request_code)
+                    if request == None:
+                        continue  
+                elif request_code == 'GET':
+                    request = get(request, request_code, request_raw)
+                    if not request:
+                        continue
+                elif request_code == 'PIN' or request_code=='UNPIN':
+                    request = pin_unpin(request, request_code, request_raw)
+                    if not request:
+                        continue
+                elif request_code == 'CLEAR':
+                    request = request_code
 
-            # Send request message to server
-            client.send(request.encode())
-            print('Request {} sent to server, waiting for response...'.format(request))
-            # Collect server response
-            response = client.recv(1024)
-            print('Server response:\n{}'.format(response.decode()))
+                # Send request message to server
+                client.send(request.encode())
+                print('Request {} sent to server, waiting for response...'.format(request))
+                # Collect server response
+                response = client.recv(1024)
+                print('Server response:\n{}'.format(response.decode()))
 
-    except Exception as e:
-        print('Exception occurred: {}\nPlease follow instructions and try again.'.format(e))
-        continue
+        except Exception as e:
+            print('Exception occurred: {}\nPlease follow instructions and try again.'.format(e))
+            continue

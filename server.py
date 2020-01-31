@@ -3,9 +3,6 @@ from threading import Thread, active_count
 import sys  # In order to terminate the program
 from time import sleep
 
-DEFAULT_PIN_STATUS = False
-GET_REQ_PARAMS = ['COLOR','CONTAINS','REFERSTO']
-
 
 # Form connect server response to send back to client
 def server_connect():
@@ -182,21 +179,43 @@ def socket_service(connection_socket):
 
 
 if __name__ == "__main__":
-    
+
+    DEFAULT_PIN_STATUS = False
+    GET_REQ_PARAMS = ['COLOR','CONTAINS','REFERSTO']
+
     try:
         # User inputs
-        sys.argv
-        server_port = int(input('Enter an available port number: '))
-        BOARD_WIDTH = int(input('Enter note board width: '))
-        BOARD_HEIGHT = int(input('Enter note board height: '))
-        AVAIL_COLORS = input(
-            'Enter note color options separated by space (first input as default colour): ').upper().split()
+        # If more than 3 args entered, proceed with cmd inputs
+        if len(sys.argv) >= 5:
+            args = sys.argv
+            arg1 = args[1]
+            arg2 = args[2]
+            arg3 = args[3]
+            # Exit if args are invalid
+            if not arg1.isdigit() or not arg2.isdigit() or not arg3.isdigit():
+                print('Arguments not valid. Example: python3 test.py 8080 100 100 ...')
+                sys.exit()
+            elif int(arg1)==0 or int(arg2)==0 or int(arg3)==0:
+                print('First 3 args should be integers greater than 0. Example: python3 test.py 8080 100 100')
+                sys.exit()
+            else:
+                SERVER_PORT = abs(int(arg1))
+                BOARD_WIDTH = abs(int(arg2))
+                BOARD_HEIGHT = abs(int(arg3))
+                AVAIL_COLORS = args[4:]
+        # If number of args is less than 3, ask for input explicitly
+        elif len(sys.argv) < 5:
+            SERVER_PORT = int(input('Enter an available port number: '))
+            BOARD_WIDTH = int(input('Enter note board width: '))
+            BOARD_HEIGHT = int(input('Enter note board height: '))
+            AVAIL_COLORS = input(
+                'Enter note color options separated by space (first input as default colour): ').upper().split()
         DEFAULT_COLOR = AVAIL_COLORS[0]
         #This note will be global among all threads
         notes = []
         # Create a TCP server socket
         server_socket = socket(AF_INET, SOCK_STREAM)
-        server_socket.bind(("", server_port))
+        server_socket.bind(("", SERVER_PORT))
         thread_limit = 5
         server_socket.listen(thread_limit)
         print('Server is ready')
@@ -206,7 +225,7 @@ if __name__ == "__main__":
             print('Current active threads count:', active_count())
             while active_count() == thread_limit:
                 print('{} alive, waiting for any to finish to continue opening a new connection...')
-                sleep(3)
+                sleep(5)
                 continue
             # (Wait to) Set up a new connection from the client
             connection_socket, addr = server_socket.accept()
