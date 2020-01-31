@@ -32,7 +32,7 @@ def post(request, request_code):
     # If length of request is 1, hint user to keep inputting
     if len(request) == 1:
         request_content = input('request requires: coordinates, width, height, color, "message" and status, separated by space.\
-                \nExample: 6 6 5 5 red Pick up Fred from home at 5 pinned\
+                \nExample: 6 6 5 5 red Pick up Fred from home at 5 pinned. Note that negtive values will be converted to positive.\
                 \nEnter your POST message: ')
         if request_content == '':
             print('No input provided. Please retry.')
@@ -49,6 +49,8 @@ def post(request, request_code):
     if not request_split[0].isdigit() or not request_split[1].isdigit() or not request_split[2].isdigit() or not request_split[3].isdigit():
         print('Invalid request input: numbers are required for first 4 inputs. Please try again.')
         return None
+    if int(request_split[2])==0 or int(request_split[3])==0:
+        print('Width and height of the note must be greater than 0! Please try again.')
     return request
 
 
@@ -89,7 +91,7 @@ if __name__ == "__main__":
 
     AVAIL_REQS = ['CONNECT', 'DISCONNECT', 'POST', 'GET', 'PIN', 'UNPIN', 'CLEAR']
     print('Available commands:', AVAIL_REQS)
-    
+
     # Define TCP socket
     client = socket(AF_INET, SOCK_STREAM)
     is_connected = False
@@ -97,6 +99,10 @@ if __name__ == "__main__":
     while True:
         # Get capitalized user input
         request_raw = input('Input a request: ').strip()
+
+        if request_raw == '':
+            continue
+
         request = request_raw.split()
         request_code = request[0].upper()
         if request_code not in AVAIL_REQS:

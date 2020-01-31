@@ -61,9 +61,9 @@ def server_post(request, notes):
         if x<0 or y<0 or y>BOARD_HEIGHT or width > BOARD_WIDTH or height>BOARD_HEIGHT:
             raise Exception("Note does not fit on the board. Please resize/re-position to fit it in {}x{}.".format(BOARD_WIDTH, BOARD_HEIGHT))
 
-        color = request[5]
+        color = request[5].lower()
         # If the value at index 5 is not in available color list, set it to None
-        if color.upper() not in AVAIL_COLORS:
+        if color not in AVAIL_COLORS:
             color = None
         # If status is not pinned, set is_pinned to False
         status = request[-1].upper()
@@ -80,7 +80,7 @@ def server_post(request, notes):
         color = DEFAULT_COLOR if not color else color
 
         # Create note in dictionary
-        note = {'x':x, 'y':y, 'width':width, 'height':height, 'color':color.upper(), 'message':message, 'is_pinned':is_pinned}
+        note = {'x':x, 'y':y, 'width':width, 'height':height, 'color':color, 'message':message, 'is_pinned':is_pinned}
         print('note:',note)
         notes.append(note)
         response += 'Note added to the board successfully.'
@@ -96,7 +96,7 @@ def server_get(request, notes):
     if request[1].upper() == 'ALL':
         response = "All notes:\n"
         for note in notes:
-            response += '{},{} - {}\n'.format(note['x'],note['y'],note['message'])
+            response += '{},{} - {} - {}\n'.format(note['x'],note['y'],note['color'],note['message'])
     # condition 1 GET PINS
     elif request[1].upper() == 'PINS':
         response += "All pins locations:\n"
@@ -106,20 +106,20 @@ def server_get(request, notes):
     # Condition 2 GET color=red contains=4,6 refersTo=Fred
     else:
         # Loop through each request parameter after GET
-        filtered_notes = []
+        filtered_notes = notes
         is_filtered = False
         for item in request[1:]:
-            print(item)
+            print("request item:",item)
             # item without '=' is invalid
             if '=' not in item:
                 response += 'Invalid pair: {}, skiping to next'.format(item)
                 continue
-            param, value = enumerate(item.split('='))
+            param,value = enumerate(item.split('='))
             param,value = param[1].upper(), value[1].upper()
             print(param,value)
             # COLOR
             if param == GET_REQ_PARAMS[0]:
-                filtered_notes = list(filter(lambda n: n['color']==value, filtered_notes))
+                filtered_notes = list(filter(lambda n: n['color'].upper()==value, filtered_notes))
                 is_filtered = True
             # CONTAINS
             elif param == GET_REQ_PARAMS[1]:
@@ -129,6 +129,7 @@ def server_get(request, notes):
                     response = 'Invalid coordinates/formatting. Please retry and follow format x,y (no space).'
                     break
                 x,y = int(pos[0]), int(pos[1])
+                print(x,y)
                 filtered_notes = list(filter(lambda n: n['x']==x and n['y']==y, filtered_notes))
                 is_filtered = True
             # REFERSTO
@@ -164,6 +165,7 @@ def socket_service(connection_socket):
             response=server_connect()
         elif request_code == 'DISCONNECT':
             connection_socket.close()
+            print('Disconnected client.')
             break
         elif request_code == 'CLEAR':
             response, notes = server_clear(notes)
@@ -175,7 +177,6 @@ def socket_service(connection_socket):
             response = server_get(request, notes)
         # Sent the response message to client
         connection_socket.send(response.encode())
-
 
 
 if __name__ == "__main__":
@@ -198,11 +199,11 @@ if __name__ == "__main__":
             elif int(arg1)==0 or int(arg2)==0 or int(arg3)==0:
                 print('First 3 args should be integers greater than 0. Example: python3 test.py 8080 100 100')
                 sys.exit()
-            else:
-                SERVER_PORT = abs(int(arg1))
-                BOARD_WIDTH = abs(int(arg2))
-                BOARD_HEIGHT = abs(int(arg3))
-                AVAIL_COLORS = args[4:]
+            SERVER_PORT = abs(int(arg1))
+            BOARD_WIDTH = abs(int(arg2))
+            BOARD_HEIGHT = abs(int(arg3))
+            AVAIL_COLORS = args[4:]
+
         # If number of args is less than 3, ask for input explicitly
         elif len(sys.argv) < 5:
             SERVER_PORT = int(input('Enter an available port number: '))
@@ -210,6 +211,10 @@ if __name__ == "__main__":
             BOARD_HEIGHT = int(input('Enter note board height: '))
             AVAIL_COLORS = input(
                 'Enter note color options separated by space (first input as default colour): ').upper().split()
+            if SERVER_PORT==0 or BOARD_HEIGHT==0 or BOARD_WIDTH==0:
+                print('First 3 params should be integers greater than 0. Example: python3 server.py 8080 100 100')
+                sys.exit()
+        print(AVAIL_COLORS)
         DEFAULT_COLOR = AVAIL_COLORS[0]
         #This note will be global among all threads
         notes = []
@@ -234,9 +239,10 @@ if __name__ == "__main__":
             connection_thread = Thread(target=socket_service, args=(connection_socket,))
             connection_thread.start()
             # print('one connection ended')
-            
+        
+        server_socket.close()
+        sys.exit() 
+    except ValueError as ve:
+        print("Server port, board width, and board height should be integers. Please try again.\nException:",ve)
     except Exception as e:
         print(e)
-    finally:
-        server_socket.close()
-        sys.exit()  # Terminate the program after sending the corresponding data
