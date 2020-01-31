@@ -1,0 +1,7 @@
+connect localhost 9091
+post 2 3 10 20 white thread-1 Meeting next Wednesday from 2 to 3
+post 6 6 5 5 blue thread-1 Pick up Fred from home at 5 pinned
+post 7 7 10 10 hi thread-1 amelia
+
+
+python3 server.py 9091 90 90 red white blue yellow green
