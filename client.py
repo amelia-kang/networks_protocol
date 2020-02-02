@@ -38,8 +38,8 @@ def disconnect(client, request, request_code, is_connected):
 def post(request, request_code):
     # If length of request is 1, hint user to keep inputting
     if len(request) == 1:
-        request_content = input('request requires: coordinates, width, height, color, "message" and status, separated by space.\
-                \nExample: 6 6 5 5 red Pick up Fred from home at 5 pinned. Note that negtive values will be converted to positive.\
+        request_content = input('Request requires: coordinates, width, height, color, "message" and status, separated by space.\
+                \nExample: 6 6 5 5 red Pick up Fred from home at 5 pinned. Note that negative values will be converted to positive.\
                 \nEnter your POST message: ')
         if request_content == '':
             print('No input provided. Please retry.')

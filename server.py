@@ -28,10 +28,12 @@ def server_pin_unpin(request, request_code):
     if len(request)==2 and ',' in request[1]:
         coords = request[1].split(',')
         x,y = int(coords[0]), int(coords[1])
+        note_found = False
         # Loop through each note
         for note in notes:
             # Find maching coordinates
             if note['x']==x and note['y']==y:
+                note_found = True
                 # If asked to PIN, pin
                 if request_code == 'PIN':
                     if note['is_pinned'] == True:
@@ -46,6 +48,10 @@ def server_pin_unpin(request, request_code):
                     else:
                         note['is_pinned'] = False
                         pin_count+=1
+        if not note_found:
+            response = 'No note found at coordinate {},{}'.format(x,y)
+            return response
+
         response += '{} note(s) {}.'.format(pin_count, 'pinned' if request_code=='PIN' else 'unpinned')
     else:
         response = 'Invalid format of PIN/UNPIN instruction. Please use format PIN/UNPIN X,Y and try again.'
@@ -64,7 +70,6 @@ def server_post(request, notes):
             raise Exception("Note does not fit on the board. Please resize/reposition to fit it in {}x{}.".format(BOARD_WIDTH, BOARD_HEIGHT))
 
         color = request[5].lower()
-        print(color, 'vs', AVAIL_COLORS)
         # If the value at index 5 is not in available color list, set it to None
         if color not in AVAIL_COLORS:
             color = None
@@ -99,7 +104,7 @@ def server_get(request, notes):
     if request[1].upper() == 'ALL':
         response = "All notes:\n"
         for note in notes:
-            response += '{},{} - {} - {}\n'.format(note['x'],note['y'],note['color'],note['message'])
+            response += '{},{} - {} - {} - {}\n'.format(note['x'],note['y'],note['color'],note['message'], note['is_pinned'])
     # condition 1 GET PINS
     elif request[1].upper() == 'PINS':
         response += "All pins locations:\n"
@@ -112,7 +117,7 @@ def server_get(request, notes):
         filtered_notes = notes
         is_filtered = False
         for item in request[1:]:
-            print("request item:",item)
+            print("Request item:",item)
             # item without '=' is invalid
             if '=' not in item:
                 response += 'Invalid pair: {}, skiping to the next\n'.format(item)
