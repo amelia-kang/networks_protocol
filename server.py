@@ -231,6 +231,7 @@ if __name__ == "__main__":
         # Create a TCP server socket
         server_socket = socket(AF_INET, SOCK_STREAM)
         server_socket.bind(("", SERVER_PORT))
+        # Number of threads allowed to run simultaneously
         thread_limit = 5
         server_socket.listen(thread_limit)
         print('Server is ready')

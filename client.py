@@ -7,17 +7,25 @@ def connect(client, request, request_code, is_connected):
         if len(request) == 1:
             server_info = input(
                 'Example: localhost 9090\nEnter server IP and port separated by space: ').split()
+            if len(server_info)<2:
+                print('Insufficient server information given. Please try again. Example: localhost 9090')
+                return None, False, None
         else:
             server_info = request[1:]
-        print((server_info[0],server_info[1]))
-        client.connect((server_info[0], int(server_info[1])))
+        host = server_info[0]
+        port = server_info[1]
+        if port.isdigit():
+            client.connect((host, int(port)))
+        else:
+            print('Incorrect port given. Port must be a number e.g. 9090. Please try again.')
+            return None, False, None
     except Exception as e:
         raise Exception('Connection cannot be established.\nException: {}'.format(e))
     is_connected = True
     client.send(request_code.encode())
     print('Request {} sent to server, waiting for response...'.format(request))
     response = client.recv(1024)
-    print('Server response: ', response.decode())
+    print('Server response:\n', response.decode())
     return client, is_connected, request
 
 def disconnect(client, request, request_code, is_connected):
@@ -46,7 +54,7 @@ def post(request, request_code):
             return None
     # Validate if first 4 inputs are numbers
     if not request_split[0].isdigit() or not request_split[1].isdigit() or not request_split[2].isdigit() or not request_split[3].isdigit():
-        print('Invalid request input: numbers are required for first 4 inputs. Please try again.')
+        print('Invalid request input: the first 4 inputs must be numbers. Please try again.')
         return None
     if int(request_split[2])==0 or int(request_split[3])==0:
         print('Width and height of the note must be greater than 0! Please try again.')
@@ -123,6 +131,8 @@ if __name__ == "__main__":
                     print('Client already connected to a server {}'.format)
                     continue
                 client, is_connected, request = connect(client, request, request_code, is_connected)
+                if not client:
+                    continue
 
             elif request_code == 'DISCONNECT':
                 if is_connected == False:
