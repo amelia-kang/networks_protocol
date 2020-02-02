@@ -12,8 +12,7 @@ def connect(client, request, request_code, is_connected):
         print((server_info[0],server_info[1]))
         client.connect((server_info[0], int(server_info[1])))
     except Exception as e:
-        raise Exception('Connection cannot be established. \
-        Please check server input or connection status and retry.\nException: {}'.format(e))
+        raise Exception('Connection cannot be established.\nException: {}'.format(e))
     is_connected = True
     client.send(request_code.encode())
     print('Request {} sent to server, waiting for response...'.format(request))
@@ -70,15 +69,25 @@ def get(request, request_code, request_raw):
 
 
 def pin_unpin(request, request_code, request_raw):
+    # If user enter PIN or UNPIN, show instructions
     if len(request)==1:
         coords = input('Example: 7,7\nEnter a pair of coordinate separated by comma: ')
-        coords_list = coords.split() 
-        request = request_code+' '+coords
-    elif len(request) ==2: 
-        coords_list = request[1].split(',')
-        request = request_raw
+        if ',' in coords:
+            coords_list = coords.split(',') 
+            request = request_code+' '+coords
+        else:
+            print('Invalid format of PIN/UNPIN parameter. Example: 6,7. Please try again.')
+            return None
+    # If usre enters PIN/UNPIN 6,7, proceed
+    elif len(request)==2: 
+        if ',' in request[1]:
+            coords_list = request[1].split(',')
+            request = request_raw
+        else:
+            print('Invalid format of this PIN/UNPIN request. Example: PIN 6,7. Please try again.')
+            return None
     else:
-        print('Invalid format for this PIN/UNPIN request. Example: PIN 6,7. Please try again.')
+        print('Invalid format of this PIN/UNPIN request. Example: PIN 6,7. Please try again.')
         return None
     # Validate if the coordinates are numbers
     if len(coords_list) != 2 or not coords_list[0].isdigit() or not coords_list[1].isdigit():
@@ -118,7 +127,6 @@ if __name__ == "__main__":
             elif request_code == 'DISCONNECT':
                 if is_connected == False:
                     print('Client has not opened a connection or connection already closed.')
-                    continue
                 else:
                     client, is_connected = disconnect(client, request, request_code, is_connected)
                 break

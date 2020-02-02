@@ -47,7 +47,9 @@ def server_pin_unpin(request, request_code):
                         note['is_pinned'] = False
                         pin_count+=1
         response += '{} note(s) {}.'.format(pin_count, 'pinned' if request_code=='PIN' else 'unpinned')
-        return response
+    else:
+        response = 'Invalid format of PIN/UNPIN instruction. Please use format PIN/UNPIN X,Y and try again.'
+    return response
 
 
 # Add the post to note board, update notes list, and return a response and notes
@@ -62,6 +64,7 @@ def server_post(request, notes):
             raise Exception("Note does not fit on the board. Please resize/re-position to fit it in {}x{}.".format(BOARD_WIDTH, BOARD_HEIGHT))
 
         color = request[5].lower()
+        print(color, 'vs', AVAIL_COLORS)
         # If the value at index 5 is not in available color list, set it to None
         if color not in AVAIL_COLORS:
             color = None
@@ -117,10 +120,12 @@ def server_get(request, notes):
             param,value = enumerate(item.split('='))
             param,value = param[1].upper(), value[1].upper()
             print(param,value)
+
             # COLOR
             if param == GET_REQ_PARAMS[0]:
                 filtered_notes = list(filter(lambda n: n['color'].upper()==value, filtered_notes))
                 is_filtered = True
+            
             # CONTAINS
             elif param == GET_REQ_PARAMS[1]:
                 pos = value.split(',')
@@ -132,21 +137,25 @@ def server_get(request, notes):
                 print(x,y)
                 filtered_notes = list(filter(lambda n: n['x']==x and n['y']==y, filtered_notes))
                 is_filtered = True
+            
             # REFERSTO
             elif param == GET_REQ_PARAMS[2]:
                 filtered_notes = list(filter(lambda n: value in n['message'].upper(), filtered_notes))
                 is_filtered = True
+
             # Invalid param
             else:
                 response = 'Invalid GET parameter: {}\n'.format(item)
                 return response
+            
             # If after any item search the filtered_notes is empty, exit loop
             if is_filtered and filtered_notes == []:
                 break
+        
         response += 'Notes that satify criteria {}:\n'.format(request[1:])
         if is_filtered and len(filtered_notes) > 0:
             for n in filtered_notes:
-                response += '{},{} - {}\n'.format(n['x'], n['y'], n['message'])
+                response += '{},{} - {} - {}\n'.format(n['x'], n['y'], n['color'], n['message'])
         else:
             response += 'No qualified notes found.'
     return response
@@ -215,6 +224,7 @@ if __name__ == "__main__":
                 print('First 3 params should be integers greater than 0. Example: python3 server.py 8080 100 100')
                 sys.exit()
         print(AVAIL_COLORS)
+        AVAIL_COLORS = [c.lower() for c in AVAIL_COLORS]
         DEFAULT_COLOR = AVAIL_COLORS[0]
         #This note will be global among all threads
         notes = []
@@ -238,7 +248,6 @@ if __name__ == "__main__":
             print(addr)
             connection_thread = Thread(target=socket_service, args=(connection_socket,))
             connection_thread.start()
-            # print('one connection ended')
         
         server_socket.close()
         sys.exit() 
