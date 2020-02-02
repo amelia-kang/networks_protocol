@@ -58,6 +58,7 @@ def post(request, request_code):
         return None
     if int(request_split[2])==0 or int(request_split[3])==0:
         print('Width and height of the note must be greater than 0! Please try again.')
+        return None
     return request
 
 
@@ -92,7 +93,7 @@ def pin_unpin(request, request_code, request_raw):
             coords_list = request[1].split(',')
             request = request_raw
         else:
-            print('Invalid format of this PIN/UNPIN request. Example: PIN 6,7. Please try again.')
+            print('Invalid format of PIN/UNPIN parameter. Example: PIN 6,7. Please try again.')
             return None
     else:
         print('Invalid format of this PIN/UNPIN request. Example: PIN 6,7. Please try again.')

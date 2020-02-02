@@ -56,12 +56,12 @@ def server_pin_unpin(request, request_code):
 def server_post(request, notes):
     response = ''
     try:
-        x = int(request[1])
-        y = int(request[2])
-        width = int(request[3])
-        height = int(request[4])
-        if x<0 or y<0 or y>BOARD_HEIGHT or width > BOARD_WIDTH or height>BOARD_HEIGHT:
-            raise Exception("Note does not fit on the board. Please resize/re-position to fit it in {}x{}.".format(BOARD_WIDTH, BOARD_HEIGHT))
+        x = abs(int(request[1]))
+        y = abs(int(request[2]))
+        width = abs(int(request[3]))
+        height = abs(int(request[4]))
+        if x>BOARD_WIDTH or y>BOARD_HEIGHT or width > BOARD_WIDTH or height>BOARD_HEIGHT:
+            raise Exception("Note does not fit on the board. Please resize/reposition to fit it in {}x{}.".format(BOARD_WIDTH, BOARD_HEIGHT))
 
         color = request[5].lower()
         print(color, 'vs', AVAIL_COLORS)
@@ -115,7 +115,7 @@ def server_get(request, notes):
             print("request item:",item)
             # item without '=' is invalid
             if '=' not in item:
-                response += 'Invalid pair: {}, skiping to next'.format(item)
+                response += 'Invalid pair: {}, skiping to the next\n'.format(item)
                 continue
             param,value = enumerate(item.split('='))
             param,value = param[1].upper(), value[1].upper()
@@ -131,8 +131,8 @@ def server_get(request, notes):
                 pos = value.split(',')
                 print(pos)
                 if len(pos)!=2:
-                    response = 'Invalid coordinates/formatting. Please retry and follow format x,y (no space).'
-                    break
+                    response += 'Invalid coordinates/formatting: {}. Please follow format x,y (no space)\n.'.format(item)
+                    continue
                 x,y = int(pos[0]), int(pos[1])
                 print(x,y)
                 filtered_notes = list(filter(lambda n: n['x']==x and n['y']==y, filtered_notes))
