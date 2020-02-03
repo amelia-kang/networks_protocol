@@ -2,6 +2,77 @@ import tkinter as tk
 from socket import socket, AF_INET, SOCK_STREAM
 import sys
 
+class ClientInterface(tk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.master = master
+        self.grid()
+        self.hints = None
+        self.input_ip = None
+        self.input_port = None
+        self.btn_connect = None
+        self.btn_disconnect = None
+        self.connection_status = None
+        self.dropdown = None
+        self.input_request = None
+        self.btn_send = None
+        self.actual_response = None
+        self.create_widgets()
+
+    def btn_connect_click(self):
+        self.btn_connect['state'] = tk.DISABLED
+        self.btn_disconnect['state'] = tk.NORMAL
+        self.connection_status['text'] = 'Connected to server!'
+
+    def btn_disconnect_click(self):
+        self.btn_disconnect['state'] = tk.DISABLED
+        self.btn_connect['state'] = tk.NORMAL
+        self.connection_status['text'] = 'Disconnected to server!'
+
+    def create_widgets(self):
+        self.master.geometry("400x300")
+
+        # Hint area
+        self.hints = tk.Label(self.master, text="Hints:")
+        self.hints.grid(row=0, column=0, sticky=tk.W)
+
+        # Labels for ip and port
+        tk.Label(self.master, text="IP (localhost)").grid(row=1, column=0)
+        tk.Label(self.master, text="Port").grid(row=1, column=1)
+        # Input fields for ip and port
+        self.input_ip = tk.Entry(self.master)
+        self.input_ip.grid(row=2, column=0)
+        self.input_port = tk.Entry(self.master)
+        self.input_port.grid(row=2, column=1)
+
+        # Connect & disconnect buttons
+        self.btn_connect = tk.Button(self.master, text='CONNECT', command=self.btn_connect_click)
+        self.btn_connect.grid(row=3, column=0, sticky=tk.W, pady=10, padx=50)
+        self.btn_disconnect = tk.Button(self.master, text='DISCONNECT', command=self.btn_disconnect_click, state=tk.DISABLED)
+        self.btn_disconnect.grid(row=3, column=1, sticky=tk.W, pady=10, padx=50)
+
+        # Label field for server connection response
+        self.connection_status = tk.Label(self.master, text="No connection at the moment.")
+        self.connection_status.grid(row=4, column=0, sticky=tk.W, pady=10)
+
+        # Request buttons dropdown
+        var = tk.StringVar(self.master)
+        var.set(OPTIONS[0])
+        self.dropdown = tk.OptionMenu(self.master, var, *OPTIONS)
+        self.dropdown.grid(row=5, column=0, sticky=tk.W, pady=4)
+
+        # Request input field
+        self.input_request = tk.Entry(self.master)
+        self.input_request.grid(row=6, column=0, columnspan=2,sticky=tk.W, pady=4)
+
+        # Send request button
+        self.btn_send = tk.Button(self.master, text='SEND', command=self.btn_connect_click).grid(row=6, column=1, sticky=tk.W, padx=5)
+
+        # Server response Field
+        self.actual_response = tk.Label(self.master, text="")
+        self.actual_response.grid(row=8, column=0, sticky=tk.W)
+
+
 def connect(client, request, request_code, is_connected):
     try:
         if len(request) == 1:
@@ -108,8 +179,15 @@ def pin_unpin(request, request_code, request_raw):
 if __name__ == "__main__":
 
     AVAIL_REQS = ['CONNECT', 'DISCONNECT', 'POST', 'GET', 'PIN', 'UNPIN', 'CLEAR']
-    print('Available commands:', AVAIL_REQS)
+    OPTIONS = AVAIL_REQS[2:]
 
+    print('Unfortunately the GUI does not work at the moment. Please use command line to test this application.')
+    print('If you would still like to check out the interface, please uncomment the lines below. Thank you!')
+    # master = tk.Tk()
+    # client_gui = ClientInterface(master=master)
+    # client_gui.mainloop()
+
+    print('Available commands:', AVAIL_REQS)
     # Define TCP socket
     client = socket(AF_INET, SOCK_STREAM)
     is_connected = False
@@ -134,7 +212,6 @@ if __name__ == "__main__":
                 client, is_connected, request = connect(client, request, request_code, is_connected)
                 if not client:
                     continue
-
             elif request_code == 'DISCONNECT':
                 if is_connected == False:
                     print('Client has not opened a connection or connection already closed.')
